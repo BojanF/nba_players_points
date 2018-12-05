@@ -48,9 +48,9 @@ seasons = [
 
 
 players = [
-    Player('LeBron', 'James', datetime.date(1984, 12, 30)),
-    Player('DeMar', 'DeRozan', datetime.date(1989, 8, 7)),
-    Player('Russell', 'Westbrook', datetime.date(1988, 11, 12))
+    Player('LeBron', 'James', datetime.date(1984, 12, 30), 'jamesle01'),
+    Player('DeMar', 'DeRozan', datetime.date(1989, 8, 7), 'derozde01'),
+    Player('Russell', 'Westbrook', datetime.date(1988, 11, 12), 'westbru01')
 ]
 
 

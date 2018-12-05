@@ -31,8 +31,8 @@ def insert_seasons(connection, seasons):
 def insert_player(connection, player):
     with connection.cursor() as cursor:
         # Create a new Player record
-        sql = "INSERT INTO players(`name`, `lastname`, `birthdate`) VALUES (%s, %s, %s)"
-        cursor.execute(sql, (player.name, player.lastname, player.birthdate.strftime('%Y-%m-%d')))
+        sql = "INSERT INTO players(`name`, `lastname`, `birthdate`, `slug`) VALUES (%s, %s, %s, %s)"
+        cursor.execute(sql, (player.name, player.lastname, player.birthdate.strftime('%Y-%m-%d'), player.slug))
     # connection is not autocommit by default. So you must commit to save
     # your changes.
     connection.commit()
