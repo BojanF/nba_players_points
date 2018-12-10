@@ -4,4 +4,4 @@ import pymysql
 connection = pymysql.connect(host='localhost',
                              user='root',
                              password='diplomskaRabota!',
-                             db='test')
+                             db='diplomska')
