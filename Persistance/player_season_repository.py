@@ -28,6 +28,16 @@ def get_player_season_id(player_id, season_id, team_code):
     return result
 
 
+def get_player_season_id_by_player_and_season(player_id, season_id):
+    with connection.cursor() as cursor:
+        sql = """SELECT *
+                  FROM player_season ps
+                  WHERE ps.p_id = %s and ps.s_id = %s"""
+        cursor.execute(sql, (player_id, season_id))
+        result = cursor.fetchall()
+    return result
+
+
 def get_player_season_for_given_season(player_id, season_id):
     with connection.cursor() as cursor:
         sql = "SELECT * FROM player_season ps WHERE ps.p_id=%s and ps.s_id=%s"

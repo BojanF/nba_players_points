@@ -28,3 +28,35 @@ def get_player_game_by_team_game_and_player_season(team_game, player_season_id):
         cursor.execute(sql, (team_game, player_season_id))
         result = cursor.fetchone()
     return result
+
+
+def count_games_for_player_season(player_season_id):
+    with connection.cursor() as cursor:
+        sql = "SELECT count(*) FROM player_game pg WHERE pg.pl_season_id=%s"
+        cursor.execute(sql, player_season_id)
+        result = cursor.fetchone()
+    return result[0]
+
+
+def count_games_for_player_in_season(player_id, season_id):
+    with connection.cursor() as cursor:
+        sql = """SELECT count(*)    
+                 FROM player_game pg 
+                 WHERE pg.pl_season_id in (SELECT ps.id
+                                           FROM player_season ps
+                                           WHERE ps.p_id = %s and ps.s_id = %s)"""
+        cursor.execute(sql, (player_id, season_id))
+        result = cursor.fetchone()
+    return result[0]
+
+
+def get_player_games_in_season(player_id, season_id):
+    with connection.cursor() as cursor:
+        sql = """SELECT *  
+                 FROM player_game pg 
+                 WHERE pg.pl_season_id in (SELECT ps.id
+                                           FROM player_season ps
+                                           WHERE ps.p_id = %s and ps.s_id = %s)"""
+        cursor.execute(sql, (player_id, season_id))
+        result = cursor.fetchall()
+    return result[0]

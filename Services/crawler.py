@@ -6,65 +6,26 @@ import Persistance.season_repository as season_repo
 import Persistance.game_repository as game_repo
 import Persistance.player_season_repository as player_season_repo
 import Persistance.player_game_repository as player_game_repo
-from Data.initial_data import team_index_by_code, team_index_by_name
-from selenium import webdriver
+from Services.web_drivers import chrome_driver as driver
 from Services.xpath_selectors import team_xpath_table, player_xpath_table
-# Create a new instance of the Chrome driver
-driver = webdriver.Chrome('..\\Drivers\\Chrome\\chromedriver.exe')
-
-# def games_for_team_in_given_seasons_old(driver, seasons, team_codes, xpathTable, range_from=1, range_to=82):
-#     for season in seasons:
-#         print('    Season: ' + season.full)
-#         for code in team_codes:
-#             print('         Team: ' + code)
-#             url = 'https://www.basketball-reference.com/teams/' + code + '/' + season.short + '_games.html'
-#             driver.get(url)
-#
-#             # get the table
-#             table = driver.find_element_by_xpath(xpathTable)
-#             # rows in selected table
-#             rows = table.find_elements_by_xpath('./tr')
-#
-#
-#             # if range_from!
-#             count = 0
-#
-#             for row in rows:
-#                 ths = row.find_elements_by_tag_name('th')
-#                 tds = row.find_elements_by_tag_name('td')
-#                 game = [td.text for td in tds]
-#                 count += 1
-#                 if game.__len__()!=0 and (count>=range_from and count<=range_to):
-#                     game = np.insert(game, 0, ths[0].text)
-#                     game[1] = tds[0].get_attribute('csk')
-#                     # for win streak - default is W 1
-#                     #  so we want to be without space - W1
-#                     game[13] = game[13].replace(' ', '')
-#                     if game[5] == '@':
-#                         teamHA = 'A'
-#                     else:
-#                         teamHA = 'H'
-#                     game[5] = teamHA
-#                     repo.insert_game(season_index_by_short[season.short], team_index_by_code[code], team_index_by_name[game[6]], game)
-#
-#                 if game.__len__() == 0:
-#                     # rows thad don`t represent game
-#                     count -= 1
-#
-#                 # if count == rows_limit:
-#                 if count == range_to:
-#                     break
 
 
 def games_for_players_in_given_seasons(players, seasons, range_from=1, range_to=82):
     for season in seasons:
-        print('Insert games for season ', season)
+        print('     Insert games for season ' + season)
         for player in players:
             games_for_player(player, season, range_from, range_to)
 
 
 def games_for_player(player_slug, season_p, range_from=1, range_to=82):
-    print('     Insert games for player ', str(player_slug), ' -> [' + str(range_from) + ':' + str(range_to) + ']')
+    # get player id
+    player_id = player_repo.get_player_id_by_slug(player_slug)
+
+    if player_id is None:
+        print('         Player with slug ' + player_slug + ' does not exist')
+        return
+
+    print('         Insert games for player ' + str(player_slug) + ' -> [' + str(range_from) + ':' + str(range_to) + ']')
     url = 'https://www.basketball-reference.com/players/a/' + player_slug + '/gamelog/' + season_p
     driver.get(url)
     # xpathTable = '//*[@id="pgl_basic"]/tbody'
@@ -76,9 +37,6 @@ def games_for_player(player_slug, season_p, range_from=1, range_to=82):
 
     # eliminating rows that are not representation of games
     rows = rows[0:20] + rows[21:41] + rows[42:62] + rows[63:83] + rows[84:86]
-
-    # get player id
-    player_id = player_repo.get_player_id_by_slug(player_slug)
 
     # get season
     season = season_repo.get_season_by_short_representation(season_p)
@@ -124,14 +82,14 @@ def games_for_player(player_slug, season_p, range_from=1, range_to=82):
                 player_season = player_season_repo.get_player_season_id(player_id, season[0], game[4])
 
             team_win_pct_streak = game_repo.get_team_win_pct_and_streak_after_game(int(game[0]) - 1,
-                                                                                  player_season[3],
-                                                                                  season[0])
+                                                                                    player_season[3],
+                                                                                    season[0])
 
             opponent_previous_game = game_repo.find_game_by_team_opponent_data(game[6], player_season[3], game[2])
 
             opponent_win_pct_streak = game_repo.get_team_win_pct_and_streak_after_game(opponent_previous_game[2] - 1,
-                                                                                      game[6],
-                                                                                      season[0])
+                                                                                        game[6],
+                                                                                        season[0])
 
         if game[0] != '1' and game[0] != '2':
             # print('game > 3')
@@ -181,57 +139,73 @@ def games_for_player(player_slug, season_p, range_from=1, range_to=82):
         player_game_repo.insert(persist_game)
 
 
-def games_for_team_in_given_seasons(seasons, team_codes, range_from=1, range_to=82):
+def games_for_teams_in_given_seasons(seasons, team_codes, range_from=1, range_to=82):
     for season in seasons:
         print('    Season: ' + season[1])
         for code in team_codes:
-            print('         Team: ' + code + ' -> ' + repr(range_from) + ':' + repr(range_to))
-            url = 'https://www.basketball-reference.com/teams/' + code + '/' + season[2] + '_games.html'
-            driver.get(url)
+            games_for_team(season, code, range_from, range_to)
 
-            # get the table
-            table = driver.find_element_by_xpath(team_xpath_table)
-            # rows in selected table
-            rows = table.find_elements_by_xpath('./tr')
 
-            # eliminating rows that are not representation of games
-            rows = rows[0:20] + rows[21:41] + rows[42:62] + rows[63:83] + rows[84:86]
+def games_for_team(season, code, range_from=1, range_to=82):
+    team_id = team_repo.get_team_id_by_code(code)
+    if team_id is None:
+        print('Team with code ' + code + 'does not exist')
+        return
 
-            # range of games
-            if not(range_from == 1 and range_to == 82):
-                rows = rows[range_from-1:range_to]
-            # print(rows.__len__())
+    if season is None:
+        print('Season argument is not in correct format')
+        return
 
-            for row in rows:
-                # get th and td from html table row
-                ths = row.find_elements_by_tag_name('th')
-                tds = row.find_elements_by_tag_name('td')
+    print('         Team: ' + code + ' -> [' + repr(range_from) + ':' + repr(range_to) + ']')
+    url = 'https://www.basketball-reference.com/teams/' + code + '/' + season[2] + '_games.html'
+    driver.get(url)
 
-                # every td cell value from html row in stored in array cell
-                game = [td.text for td in tds]
+    # get the table
+    table = driver.find_element_by_xpath(team_xpath_table)
+    # rows in selected table
+    rows = table.find_elements_by_xpath('./tr')
 
-                # set number of in season for team
-                game = np.insert(game, 0, ths[0].text)
+    # eliminating rows that are not representation of games
+    rows = rows[0:20] + rows[21:41] + rows[42:62] + rows[63:83] + rows[84:86]
 
-                # get date form attribute in form YYYY-MM-DD
-                game[1] = tds[0].get_attribute('csk')
+    # range of games
+    if not (range_from == 1 and range_to == 82):
+        rows = rows[range_from - 1:range_to]
 
-                # for win streak - default is W 1
-                #  so we want to be without space - W1
-                game[13] = game[13].replace(' ', '')
+    for row in rows:
+        # get th and td from html table row
+        ths = row.find_elements_by_tag_name('th')
+        tds = row.find_elements_by_tag_name('td')
 
-                if game[5] == '@':
-                    team_ha = 'A'
-                else:
-                    team_ha = 'H'
-                game[5] = team_ha
+        # every td cell value from html row in stored in array cell
+        game = [td.text for td in tds]
 
-                # if this cell is empty => game is not played yet
-                # cycle needs to end here
-                if game[4] == '':
-                    break
+        # set number of game in season for team
+        game = np.insert(game, 0, ths[0].text)
 
-                game_repo.insert(season[0], team_index_by_code[code], team_index_by_name[game[6]], game)
+        # get date form attribute in form YYYY-MM-DD
+        game[1] = tds[0].get_attribute('csk')
+
+        # for win streak - default is W 1
+        #  so we want to be without space - W1
+        game[13] = game[13].replace(' ', '')
+
+        if game[5] == '@':
+            team_ha = 'A'
+        else:
+            team_ha = 'H'
+        game[5] = team_ha
+
+        # if this cell is empty => game is not played yet
+        # cycle needs to end here
+        if game[4] == '':
+            break
+
+        children_of_td_with_opponent_name = tds[5].find_element_by_css_selector('td > a')
+        opponent_code = children_of_td_with_opponent_name.get_attribute('href').split('/')[4]
+        opponent_id = team_repo.get_team_id_by_code(opponent_code)
+
+        game_repo.insert(season[0], team_id, opponent_id, game)
 
 
 def player_game_html_row_parse(row, pts_margin_and_odds=None):

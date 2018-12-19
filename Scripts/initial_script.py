@@ -2,6 +2,7 @@ import datetime
 import Services.crawler as crawler
 from Data.initial_data import teams, seasons, players, player_season, team_index_by_code
 from Services.db_connection import connection
+from Services.web_drivers import chrome_driver as driver
 import Persistance.team_repository as team_repo
 import Persistance.player_repository as player_repo
 import Persistance.season_repository as season_repo
@@ -27,14 +28,15 @@ seasons_db = season_repo.get_seasons_by_short_representation(['2016', '2017', '2
 
 print('Insert team games ')
 # couple of teams - testing
-# crawler.games_for_team_in_given_seasons(seasons_db, ['CLE', 'LAL'], 5, 6)
+# crawler.games_for_teams_in_given_seasons(seasons_db, ['CLE', 'LAL'], 21, 23)
 # all teams
-crawler.games_for_team_in_given_seasons(seasons_db, list(team_index_by_code.keys()))
+crawler.games_for_teams_in_given_seasons(seasons_db, list(team_index_by_code.keys()))
 
 print('Insert player games')
 players_slugs = [player.slug for player in players]
 crawler.games_for_players_in_given_seasons(players_slugs, ['2016', '2017', '2018'])
 
+driver.quit()
 connection.close()
 
 print('End: ' + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))

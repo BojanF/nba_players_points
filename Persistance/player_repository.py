@@ -21,4 +21,7 @@ def get_player_id_by_slug(slug):
         sql = "SELECT p.id FROM players p WHERE p.slug=%s"
         cursor.execute(sql, slug)
         result = cursor.fetchone()
-    return result[0]
+    if result is not None:
+        return result[0]
+    return None
+
