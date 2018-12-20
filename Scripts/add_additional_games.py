@@ -15,7 +15,7 @@ def games_in_given_season_for_all_teams(season_id):
     for team in teams:
         games = game_repo.count_games_for_team_in_given_season(team[0], season_id)
         count += games
-        print(str(games) + ' - ' + team[2] + ':' + team[1])
+        print(str(games) + ' - ' + team[2] + ' : ' + team[1])
     print(count)
 
 
@@ -41,10 +41,10 @@ def add_additional_games_for_players(season, players):
             print('Player with slug ' + player + ' does not exist')
             continue
         games = player_game_repo.count_games_for_player_in_season(player_id, season_db[0])
-        print('         Before ' + player, ':', str(games) + ' games')
+        print('     Before: ' + player + ' ' + str(games) + ' games')
         crawler.games_for_player(player, season, games+1)
         games_after = player_game_repo.count_games_for_player_in_season(player_id, season_db[0])
-        print('         After ' + player, ':', str(games_after) + ' games')
+        print('     After: ' + player + ' ' + str(games_after) + ' games')
     print('End: ' + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
 

@@ -10,14 +10,14 @@ from Services.web_drivers import chrome_driver as driver
 from Services.xpath_selectors import team_xpath_table, player_xpath_table
 
 
-def games_for_players_in_given_seasons(players, seasons, range_from=1, range_to=82):
+def games_for_players_in_given_seasons(players, seasons, range_from=1, range_to=85):
     for season in seasons:
         print('     Insert games for season ' + season)
         for player in players:
             games_for_player(player, season, range_from, range_to)
 
 
-def games_for_player(player_slug, season_p, range_from=1, range_to=82):
+def games_for_player(player_slug, season_p, range_from=1, range_to=85):
     # get player id
     player_id = player_repo.get_player_id_by_slug(player_slug)
 
@@ -36,14 +36,14 @@ def games_for_player(player_slug, season_p, range_from=1, range_to=82):
     rows = table.find_elements_by_xpath('./tr')
 
     # eliminating rows that are not representation of games
-    rows = rows[0:20] + rows[21:41] + rows[42:62] + rows[63:83] + rows[84:86]
+    rows = rows[0:20] + rows[21:41] + rows[42:62] + rows[63:83] + rows[84:89]
 
     # get season
     season = season_repo.get_season_by_short_representation(season_p)
 
     player_season = None
 
-    previous_game = []
+    previous_game = None
 
     # range of games
     if range_from != 1:
@@ -76,26 +76,58 @@ def games_for_player(player_slug, season_p, range_from=1, range_to=82):
         opponent_previous_game = ()
         opponent_win_pct_streak = ()
 
-        if game[0] != '1':
+        game[0] = game_repo.get_game_number_for_team_in_season(game[2],
+                                                               team_repo.get_team_id_by_code(game[4]),
+                                                               game[6])
+        # print('game[0] ' + str(game[0]))
 
+        if game[0] != 1 and game[1] != '1':
+            # print('regular')
             if game[4] != previous_game[4]:
                 player_season = player_season_repo.get_player_season_id(player_id, season[0], game[4])
 
-            team_win_pct_streak = game_repo.get_team_win_pct_and_streak_after_game(int(game[0]) - 1,
-                                                                                    player_season[3],
-                                                                                    season[0])
+            team_win_pct_streak = game_repo.get_team_win_pct_and_streak_after_game(game[0] - 1,
+                                                                                   player_season[3],
+                                                                                   season[0])
 
-            opponent_previous_game = game_repo.find_game_by_team_opponent_data(game[6], player_season[3], game[2])
+            opponent_previous_game = game_repo.find_game_by_team_opponent_date(game[6], player_season[3], game[2])
 
             opponent_win_pct_streak = game_repo.get_team_win_pct_and_streak_after_game(opponent_previous_game[2] - 1,
-                                                                                        game[6],
-                                                                                        season[0])
+                                                                                       game[6],
+                                                                                       season[0])
+        elif game[0] != 1 and game[1] == '1':
+            # print('non regular')
+            # this case is when player did not had contract with any club when season started
+            # then he joined some club, and his first game of the season(game[1]) with this club
+            # is not first game for his club(because season already started) and games were played
+            # I presume that this is rare case in the past
+            # but in modern nba from 2017-18 i think could happen
 
-        if game[0] != '1' and game[0] != '2':
+            # this could also be a case when player has a club when season starts
+            # but because of injury or something else dit not played from game 1
+            # and whe player plays his first game in season, club played several games already
+
+            previous_game = [None] * 30
+
+            player_season = player_season_repo.get_player_season_id(player_id, season[0], game[4])
+
+            team_win_pct_streak = game_repo.get_team_win_pct_and_streak_after_game(game[0] - 1,
+                                                                                   player_season[3],
+                                                                                   season[0])
+
+            opponent_previous_game = game_repo.find_game_by_team_opponent_date(game[6], player_season[3], game[2])
+
+            opponent_win_pct_streak = game_repo.get_team_win_pct_and_streak_after_game(opponent_previous_game[2] - 1,
+                                                                                       game[6],
+                                                                                       season[0])
+
+        if game[0] != 1 and game[0] != 2:
             # print('game > 3')
-            opponent_win_pct_streak_lg = game_repo.get_team_win_pct_and_streak_after_game(opponent_previous_game[2]-2,
-                                                                                         game[6],
-                                                                                         season[0])
+            opponent_win_pct_streak_lg = (None, None)
+            if opponent_previous_game is not None:
+                opponent_win_pct_streak_lg = game_repo.get_team_win_pct_and_streak_after_game(opponent_previous_game[2]-2,
+                                                                                             game[6],
+                                                                                             season[0])
             if previous_game[1] is not None:
                 persist_game = [game[0], game[2], game[5], game[6], player_season[0], game[1], 1, previous_game[8],
                                 previous_game[9].split(':')[0], previous_game[10], previous_game[11], previous_game[12],
@@ -111,7 +143,7 @@ def games_for_player(player_slug, season_p, range_from=1, range_to=82):
                                 [team_win_pct_streak[0], team_win_pct_streak[1], opponent_win_pct_streak[0],
                                 opponent_win_pct_streak[1], opponent_win_pct_streak_lg[1], points] + pts_margin_and_odds
             previous_game = game
-        elif game[0] == '2':
+        elif game[0] == 2:
             # print('game 2')
             if previous_game[1] is not None:
                 persist_game = [game[0], game[2], game[5], game[6], player_season[0], game[1], 1, previous_game[8],
@@ -244,7 +276,7 @@ def player_game_html_row_parse(row, pts_margin_and_odds=None):
         if game[18] == '':
             game[18] = None
         points = game[27]
-        # if pts_margin_and_odds.__len__() > 0:
+
         if pts_margin_and_odds is not None:
             if float(points) > float(pts_margin_and_odds[0]):
                 pts_margin_and_odds += ['OVER']

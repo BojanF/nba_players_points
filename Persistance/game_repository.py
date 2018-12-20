@@ -37,7 +37,7 @@ def get_team_win_pct_and_streak_after_game(team_game, team_id, season_id):
 
 
 # def find_game(team_id, opponent_id, date):
-def find_game_by_team_opponent_data(team_id, opponent_id, date):
+def find_game_by_team_opponent_date(team_id, opponent_id, date):
     with connection.cursor() as cursor:
         sql = "SELECT * FROM games g WHERE g.team_id=%s and g.opponent_id=%s and g.date=%s"
         cursor.execute(sql, (team_id, opponent_id, date))
@@ -57,5 +57,13 @@ def count_games_for_team_in_given_season(team_id, season_id):
     with connection.cursor() as cursor:
         sql = "SELECT count(*) FROM games g WHERE g.team_id=%s and g.season_id=%s"
         cursor.execute(sql, (team_id, season_id))
+        result = cursor.fetchone()
+    return result[0]
+
+
+def get_game_number_for_team_in_season(date, team_id, opponent_id):
+    with connection.cursor() as cursor:
+        sql = "SELECT g.game_in_season FROM games g WHERE g.date=%s and g.team_id=%s and g.opponent_id=%s"
+        cursor.execute(sql, (date, team_id, opponent_id))
         result = cursor.fetchone()
     return result[0]
