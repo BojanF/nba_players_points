@@ -59,7 +59,7 @@ games_in_given_season_for_all_teams(4)
 # games that you will add
 # and
 # you have to run add_additional_games_for_teams() function
-players_slugs = ['jamesle01', 'derozde01', 'westbru01']
+players_slugs = ['jamesle01', 'derozde01', 'westbru01', 'jokicni01', 'doncilu01', 'kuzmaky01']
 add_additional_games_for_players('2019', players_slugs)
 
 driver.quit()

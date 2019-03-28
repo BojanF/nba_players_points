@@ -45,6 +45,13 @@ def games_for_player(player_slug, season_p, range_from=1, range_to=85):
 
     previous_game = None
 
+    # range_from = number of games in db for given player in given season + 1
+    # if range_from-1 is bigger than length of rows variable(row 39)
+    # all games for this player is already added in system
+    number_of_games_web = rows.__len__()
+    if range_from > number_of_games_web:
+        return
+
     # range of games
     if range_from != 1:
         # range > 1
@@ -218,20 +225,26 @@ def games_for_team(season, code, range_from=1, range_to=82):
         # get date form attribute in form YYYY-MM-DD
         game[1] = tds[0].get_attribute('csk')
 
-        # for win streak - default is W 1
-        #  so we want to be without space - W1
-        game[13] = game[13].replace(' ', '')
-
         if game[5] == '@':
-            team_ha = 'A'
+            team_ha = '0'
         else:
-            team_ha = 'H'
+            team_ha = '1'
         game[5] = team_ha
 
         # if this cell is empty => game is not played yet
         # cycle needs to end here
         if game[4] == '':
             break
+
+        # for win streak - default is W 1 or L 1
+        # so we want to get rid of the char 'W' or 'L'
+        # in case of 'L 1' replace with minus '-' => '-1'
+        # in case of 'W 1' remains just number
+        streak = game[13].split(' ')
+        if streak[0] == 'W':
+            game[13] = streak[1]
+        else:
+            game[13] = '-' + streak[1]
 
         children_of_td_with_opponent_name = tds[5].find_element_by_css_selector('td > a')
         opponent_code = children_of_td_with_opponent_name.get_attribute('href').split('/')[4]
@@ -255,32 +268,32 @@ def player_game_html_row_parse(row, pts_margin_and_odds=None):
     game[6] = team_repo.get_team_id_by_code(game[6])
 
     if game[5] == '@':
-        team_ha = 'A'
+        team_ha = '0'
     else:
-        team_ha = 'H'
+        team_ha = '1'
     game[5] = team_ha
 
     points = None
 
     if game[1] == '':
         game[1] = None
-        pts_margin_and_odds += [None]
+        pts_margin_and_odds = [None]*4
     else:
         # FG%
         if game[12] == '':
-            game[12] = None
+            game[12] = -1
         # 3PT%
         if game[15] == '':
-            game[15] = None
+            game[15] = -1
         # FT%
         if game[18] == '':
-            game[18] = None
+            game[18] = -1
         points = game[27]
 
         if pts_margin_and_odds is not None:
             if float(points) > float(pts_margin_and_odds[0]):
-                pts_margin_and_odds += ['OVER']
+                pts_margin_and_odds += [1]
             else:
-                pts_margin_and_odds += ['UNDER']
+                pts_margin_and_odds += [0]
 
     return game, points, pts_margin_and_odds
