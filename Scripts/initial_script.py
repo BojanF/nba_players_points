@@ -1,14 +1,15 @@
-import datetime
 import Services.crawler as crawler
-from Data.initial_data import teams, seasons, players, player_season, team_index_by_code
-from Services.db_connection import connection
-from Services.web_drivers import chrome_driver as driver
 import Persistance.team_repository as team_repo
 import Persistance.player_repository as player_repo
 import Persistance.season_repository as season_repo
 import Persistance.player_season_repository as player_season_repo
+from Services.db_connection import connection
+from Services.web_drivers import chrome_driver as driver
+from Services.timestamp import start_timestamp, end_timestamp
+from Data.initial_data import teams, seasons, players, player_season, team_index_by_code
 
-print('Start: ' + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+
+print(start_timestamp())
 print('Storing initial data \nSeasons: 2015-16, 2016-17, 2017-18\n')
 
 print('Inserting teams')
@@ -39,4 +40,4 @@ crawler.games_for_players_in_given_seasons(players_slugs, ['2016', '2017', '2018
 driver.quit()
 connection.close()
 
-print('End: ' + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+print(end_timestamp())
