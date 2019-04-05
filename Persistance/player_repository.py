@@ -25,3 +25,16 @@ def get_player_id_by_slug(slug):
         return result[0]
     return None
 
+
+def get_player_name(player_id):
+    with connection.cursor() as cursor:
+        sql = """
+            select CONCAT(p.name, ' ', p.lastname)
+            from players p
+            where p.id = %s
+        """
+        cursor.execute(sql, player_id)
+        result = cursor.fetchone()
+    if result is not None:
+        return result[0]
+    return None

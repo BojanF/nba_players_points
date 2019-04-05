@@ -62,7 +62,7 @@ def get_player_games_in_season(player_id, season_id):
     return result[0]
 
 
-def get_player_games_for_feature_selection(date_start, date_end):
+def get_player_games_data_set(date_start, date_end):
     with connection.cursor() as cursor:
         sql = """ SELECT pg.ha, pg.minutes_played, pg.fg, pg.fga, pg.fg_pct, pg.tp, pg.tpa, pg.tp_pct, pg.ft, pg.fta, 
                          pg.ft_pct, pg.orb, pg.drb, pg.ast, pg.stl, pg.blk, pg.tov, pg.pf, pg.pts_last_game,
@@ -74,5 +74,59 @@ def get_player_games_for_feature_selection(date_start, date_end):
                         pg.team_game BETWEEN 6 and 80 and
                         pg.date BETWEEN %s and %s"""
         cursor.execute(sql, (date_start, date_end))
+        result = cursor.fetchall()
+    return result
+
+
+def get_player_data_set_games_feature_selected(date_start, date_end):
+    with connection.cursor() as cursor:
+        sql = """ SELECT pg.ha, pg.fg_pct, pg.tp, pg.tp_pct, pg.ft, pg.fta, pg.ft_pct, pg.blk, 
+                         pg.opponent_win_pct, pg.under_odd, pg.over_odd, pg.pts_result
+                  FROM player_game pg
+                  WHERE pg.last_game_data = 1 and
+                        pg.pts_result is not null and
+                        pg.team_game BETWEEN 6 and 80 and
+                        pg.date BETWEEN %s and %s"""
+        cursor.execute(sql, (date_start, date_end))
+        result = cursor.fetchall()
+    return result
+
+
+def get_data_set_for_player(player_id, date_start, date_end):
+    with connection.cursor() as cursor:
+        sql = """ SELECT pg.ha, pg.minutes_played, pg.fg, pg.fga, pg.fg_pct, pg.tp, pg.tpa, pg.tp_pct, pg.ft, pg.fta,
+                         pg.ft_pct, pg.orb, pg.drb, pg.ast, pg.stl, pg.blk, pg.tov, pg.pf, pg.pts_last_game,
+                         pg.game_score_index, pg.plus_minus, pg.team_win_pct, pg.team_streak, pg.opponent_win_pct,
+                         pg.opponent_streak, pg.opponent_streak_in_lg, pg.pts_margin, pg.under_odd, pg.over_odd, pg.pts_result
+                  FROM player_game pg
+                  WHERE pg.pl_season_id in (
+                        SELECT ps.id
+                        FROM player_season ps, players p
+                        WHERE p.id = %s and
+                          p.id = ps.p_id) and
+                        pg.last_game_data = 1 and
+                        pg.pts_result is not null and
+                        pg.team_game BETWEEN 6 and 80 and
+                        pg.date BETWEEN %s and %s"""
+        cursor.execute(sql, (player_id, date_start, date_end))
+        result = cursor.fetchall()
+    return result
+
+
+def get_data_set_for_player_feature_selected(player_id, date_start, date_end):
+    with connection.cursor() as cursor:
+        sql = """ SELECT pg.ha, pg.fg_pct, pg.tp, pg.tp_pct, pg.ft, pg.fta, pg.ft_pct, pg.blk, 
+                         pg.opponent_win_pct, pg.under_odd, pg.over_odd, pg.pts_result
+                  FROM player_game pg
+                  WHERE pg.pl_season_id in (
+                        SELECT ps.id
+                        FROM player_season ps, players p
+                        WHERE p.id = %s and
+                          p.id = ps.p_id) and
+                        pg.last_game_data = 1 and
+                        pg.pts_result is not null and
+                        pg.team_game BETWEEN 6 and 80 and
+                        pg.date BETWEEN %s and %s"""
+        cursor.execute(sql, (player_id, date_start, date_end))
         result = cursor.fetchall()
     return result
