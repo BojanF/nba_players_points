@@ -1,6 +1,7 @@
-from sklearn.feature_selection import f_classif, f_regression, mutual_info_classif, SelectKBest, SelectPercentile, RFECV
 from sklearn.svm import SVR
-from Feature_selector.csv_file_producer import names
+from Services.csv_service import names
+from Services.timestamp import start_timestamp, end_timestamp
+from sklearn.feature_selection import SelectKBest, SelectPercentile, RFECV
 
 
 def rfecv_selector(X, Y, cv_value=10):
@@ -35,3 +36,28 @@ def percentile_selector(X, Y, function_val, percentile_value=10):
     sorted_percentiles = sorted(dictionary.items(), key=lambda kv: kv[1])
     return sorted_percentiles[-X_new.shape[1]:]
 
+
+def percentile_multiple(x, y, function_val, percentiles_array):
+    final_result = {}
+    for prct in percentiles_array:
+        print('\nPercentile selector with', prct, '% features kept')
+        print('     ', start_timestamp())
+        percentile_result = percentile_selector(x, y, function_val, prct)
+        print('     Number of features: ', percentile_result.__len__())
+        print('     ', percentile_result)
+        final_result[prct] = percentile_result
+        print('     ', end_timestamp())
+    return final_result
+
+
+def rfecv_multiple(x, y, folds):
+    final_result = {}
+    for number in folds:
+        print('\nRFECV with', number, 'folds')
+        print('     ', start_timestamp())
+        rfecv_result = rfecv_selector(x, y, number)
+        print('     Optimal number of features: ', rfecv_result[1])
+        print('     RFECV accepted features:', rfecv_result[0])
+        final_result[number] = rfecv_result[0]
+        print('     ', end_timestamp())
+    return final_result
