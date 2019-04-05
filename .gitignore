@@ -105,5 +105,4 @@ venv.bak/
 
 .idea/
 
-
-/Feature_Selector/csv_files
+/Files_generated

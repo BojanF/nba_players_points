@@ -1,11 +1,11 @@
 import numpy as np
-import Services.csv_parse as csv
+import Services.csv_service as csv
 import Persistance.team_repository as team_repo
+import Persistance.game_repository as game_repo
 import Persistance.player_repository as player_repo
 import Persistance.season_repository as season_repo
-import Persistance.game_repository as game_repo
-import Persistance.player_season_repository as player_season_repo
 import Persistance.player_game_repository as player_game_repo
+import Persistance.player_season_repository as player_season_repo
 from Services.web_drivers import chrome_driver as driver
 from Services.xpath_selectors import team_xpath_table, player_xpath_table
 
