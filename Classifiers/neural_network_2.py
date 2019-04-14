@@ -4,9 +4,9 @@ import numpy as np
 import pandas as pd
 from keras.layers import Dense
 from keras.models import Sequential
-from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 from Persistance.player_repository import get_player_name
+from sklearn.preprocessing import StandardScaler, LabelEncoder
 from Services.csv_service import create_csv_file_for_player, names, fs_names
 from Services.timestamp import start_timestamp, end_timestamp, start_timestamp_filename_w
 from sklearn.metrics import confusion_matrix, precision_score, recall_score, f1_score, accuracy_score
@@ -47,9 +47,9 @@ def fit_model(x_data, y_data, batch_size, test_size, rounds, number_of_features)
             # Add one hidden layer
             model.add(Dense(100, activation='relu'))
             # Add an output layer
-            model.add(Dense(1, activation='sigmoid'))
+            model.add(Dense(2, activation='softmax'))
 
-            model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+            model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 
             model.fit(X_train, y_train, epochs=20, batch_size=batch_size, verbose=1)
             y_pred = model.predict(X_test)
@@ -61,19 +61,20 @@ def fit_model(x_data, y_data, batch_size, test_size, rounds, number_of_features)
             sub_results[round_name]['score'] = round_score
 
             # Confusion matrix
-            sub_results[round_name]['conf_matrix'] = confusion_matrix(y_test, y_pred.round()).tolist()
+            sub_results[round_name]['conf_matrix'] = confusion_matrix(y_test.argmax(axis=1), y_pred.argmax(axis=1))\
+                .tolist()
 
             # Accuracy
             sub_results[round_name]['accuracy_score'] = round(accuracy_score(y_test, y_pred.round()), 3)
 
             # Precision
-            sub_results[round_name]['precision_score'] = round(precision_score(y_test, y_pred.round()), 3)
+            sub_results[round_name]['precision_score'] = round(precision_score(y_test, y_pred.round(), average='micro'), 3)
 
             # Recall
-            sub_results[round_name]['recall_score'] = round(recall_score(y_test, y_pred.round()), 3)
+            sub_results[round_name]['recall_score'] = round(recall_score(y_test, y_pred.round(), average='micro'), 3)
 
             # F1 score
-            sub_results[round_name]['f1_score'] = round(f1_score(y_test, y_pred.round()), 3)
+            sub_results[round_name]['f1_score'] = round(f1_score(y_test, y_pred.round(), average='micro'), 3)
 
         results[series_name] = sub_results
 
@@ -174,7 +175,7 @@ test_size_val = 0.30
 player_id = 1
 repetitions_val = (5, 20)
 
-path = '..\\Files_generated\\Classifiers_results\\Neural_networks\\'
+path = '..\\Files_generated\\Classifiers_results\\Neural_network_2\\'
 result_file_name = 'p_id_' + str(player_id) + '_' + start_timestamp_filename_w()
 result_file_path = path + result_file_name + '.txt'
 os.makedirs(os.path.dirname(result_file_path), exist_ok=True)
@@ -214,8 +215,10 @@ file.close()
 array = data_frame.values
 X = data_frame.iloc[:, 0:number_of_features_val]
 y = array[:, number_of_features_val]
+yy = pd.get_dummies(y)
+y3 = np.array(yy.values.tolist())
 
-model_results = fit_model(X, y, batch_size_value, test_size_val, repetitions_val, number_of_features_val)
+model_results = fit_model(X, y3, batch_size_value, test_size_val, repetitions_val, number_of_features_val)
 
 with open(path + result_file_name + '.json', 'w') as outfile:
     json.dump(model_results, outfile, indent=4)
