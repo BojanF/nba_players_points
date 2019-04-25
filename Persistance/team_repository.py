@@ -34,6 +34,14 @@ def get_active_teams():
     return result
 
 
+def get_teams():
+    with connection.cursor() as cursor:
+        sql = "SELECT t.id, t.name FROM teams t"
+        cursor.execute(sql)
+        result = cursor.fetchall()
+    return result
+
+
 def get_team_by_id(team_id):
     with connection.cursor() as cursor:
         sql = "SELECT * FROM teams t WHERE t.id=%s"

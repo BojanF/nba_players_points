@@ -94,7 +94,8 @@ def get_player_data_set_games_feature_selected(date_start, date_end):
 
 def get_data_set_for_player(player_id, date_start, date_end):
     with connection.cursor() as cursor:
-        sql = """ SELECT pg.ha, pg.minutes_played, pg.fg, pg.fga, pg.fg_pct, pg.tp, pg.tpa, pg.tp_pct, pg.ft, pg.fta,
+        sql = """ SELECT pg.id, day(pg.date) as day, month(pg.date) as month, year(pg.date) as year, pg.opponent_id, 
+                         pg.ha, pg.ha, pg.minutes_played, pg.fg, pg.fga, pg.fg_pct, pg.tp, pg.tpa, pg.tp_pct, pg.ft, pg.fta,
                          pg.ft_pct, pg.orb, pg.drb, pg.ast, pg.stl, pg.blk, pg.tov, pg.pf, pg.pts_last_game,
                          pg.game_score_index, pg.plus_minus, pg.team_win_pct, pg.team_streak, pg.opponent_win_pct,
                          pg.opponent_streak, pg.opponent_streak_in_lg, pg.pts_margin, pg.under_odd, pg.over_odd, pg.pts_result
@@ -115,7 +116,8 @@ def get_data_set_for_player(player_id, date_start, date_end):
 
 def get_data_set_for_player_feature_selected(player_id, date_start, date_end):
     with connection.cursor() as cursor:
-        sql = """ SELECT pg.ha, pg.fg_pct, pg.tp, pg.tp_pct, pg.ft, pg.fta, pg.ft_pct, pg.blk, 
+        sql = """ SELECT pg.id, day(pg.date) as day, month(pg.date) as month, year(pg.date) as year, pg.opponent_id, 
+                         pg.ha, pg.ha, pg.fg_pct, pg.tp, pg.tp_pct, pg.ft, pg.fta, pg.ft_pct, pg.blk, 
                          pg.opponent_win_pct, pg.under_odd, pg.over_odd, pg.pts_result
                   FROM player_game pg
                   WHERE pg.pl_season_id in (

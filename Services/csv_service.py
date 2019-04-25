@@ -3,16 +3,21 @@ import csv
 from Services.timestamp import start_timestamp_filename_w
 import Persistance.player_game_repository as player_game_repo
 
-names = ['ha', 'minutes_played', 'fg', 'fga', 'fg_pct', 'tp', 'tpa', 'tp_pct', 'ft', 'fta',
+header = ['id', 'day', 'month', 'year', 'opponent', 'ha_head']
+footer = ['pts_result']
+
+features = ['ha', 'minutes_played', 'fg', 'fga', 'fg_pct', 'tp', 'tpa', 'tp_pct', 'ft', 'fta',
          'ft_pct', 'orb', 'drb', 'ast', 'stl', 'blk', 'tov', 'pf', 'pts_last_game',
          'game_score_index', 'plus_minus', 'team_win_pct', 'team_streak', 'opponent_win_pct',
-         'opponent_streak', 'opponent_streak_in_lg', 'pts_margin', 'under_odd', 'over_odd', 'pts_result']
+         'opponent_streak', 'opponent_streak_in_lg', 'pts_margin', 'under_odd', 'over_odd']
+fs_features = ['ha', 'fg_pct', 'tp', 'tp_pct', 'ft', 'fta', 'ft_pct', 'blk', 'opponent_win_pct', 'under_odd', 'over_odd']
 
-fs_names = ['ha', 'fg_pct', 'tp', 'tp_pct', 'ft', 'fta', 'ft_pct', 'blk', 'opponent_win_pct', 'under_odd', 'over_odd', 'pts_result']
+names = header + features + footer
+fs_names = header + fs_features + footer
 
 
 def create_csv_file_for_all_players(start_date, end_date, fs_mode=None):
-    directory = '..\\Files_generated\\CSV_games_files\\All_players\\'
+    directory = '..\\..\\Files_generated\\CSV_games_files\\All_players\\'
     if fs_mode is not None:
         player_games = player_game_repo.get_player_data_set_games_feature_selected(start_date, end_date)
         directory += 'fs_'
@@ -23,7 +28,7 @@ def create_csv_file_for_all_players(start_date, end_date, fs_mode=None):
 
 
 def create_csv_file_for_player(player_id, start_date, end_date, fs_mode=None):
-    directory = '..\\Files_generated\\CSV_games_files\\Player\\'
+    directory = '..\\..\\Files_generated\\CSV_games_files\\Player\\'
     if fs_mode is not None:
         player_games = player_game_repo.get_data_set_for_player_feature_selected(player_id, start_date, end_date)
         directory += 'fs_p_id_' + str(player_id) + '_'
