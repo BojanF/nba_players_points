@@ -4,9 +4,10 @@ import numpy as np
 import pandas as pd
 from keras.layers import Dense
 from keras.models import Sequential
+from keras.callbacks import EarlyStopping
+from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 from Persistance.player_repository import get_player_name
-from sklearn.preprocessing import StandardScaler, LabelEncoder
 from Services.csv_service import create_csv_file_for_player, names, fs_names
 from Services.timestamp import start_timestamp, end_timestamp, start_timestamp_filename_w
 from sklearn.metrics import confusion_matrix, precision_score, recall_score, f1_score, accuracy_score
@@ -50,8 +51,8 @@ def fit_model(x_data, y_data, batch_size, test_size, rounds, number_of_features)
             model.add(Dense(2, activation='softmax'))
 
             model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
-
-            model.fit(X_train, y_train, epochs=20, batch_size=batch_size, verbose=1)
+            early_stop = EarlyStopping(monitor='loss', patience=3, verbose=1)
+            model.fit(X_train, y_train, epochs=20, batch_size=batch_size, verbose=1, shuffle=False, callbacks=[early_stop])
             y_pred = model.predict(X_test)
 
             score = model.evaluate(X_test, y_test, verbose=1)
@@ -175,7 +176,7 @@ test_size_val = 0.30
 player_id = 1
 repetitions_val = (5, 20)
 
-path = '..\\Files_generated\\Classifiers_results\\Neural_network_2\\'
+path = '..\\..\\Files_generated\\Classifiers_results\\Classic\\Neural_network_2\\'
 result_file_name = 'p_id_' + str(player_id) + '_' + start_timestamp_filename_w()
 result_file_path = path + result_file_name + '.txt'
 os.makedirs(os.path.dirname(result_file_path), exist_ok=True)
@@ -191,16 +192,19 @@ file.write('Number of series: ' + str(repetitions_val[0]) + '\n')
 file.write('Number of rounds in series: ' + str(repetitions_val[1]) + '\n')
 file.write('Neural network model data set with games from ' + start + ' to ' + end + '\n')
 
+
+header_features = 6
+
 if feature_selection:
-    number_of_features_val = fs_names.__len__() - 1
-    file.write('Features used: ' + json.dumps(fs_names) + '\n')
+    number_of_features_val = fs_names.__len__() - 1 - header_features
+    file.write('Features used: ' + json.dumps(fs_names[header_features:]) + '\n')
     file.write('Number of features: ' + str(number_of_features_val) + '\n')
     file.write('**Feature selection applied**')
     file_location = create_csv_file_for_player(player_id, start, end, feature_selection)
     data_frame = pd.read_csv(file_location, names=fs_names)
 else:
-    number_of_features_val = names.__len__() - 1
-    file.write('Features used: ' + json.dumps(names) + '\n')
+    number_of_features_val = names.__len__() - 1 - header_features
+    file.write('Features used: ' + json.dumps(names[header_features:]) + '\n')
     file.write('Number of features: ' + str(number_of_features_val) + '\n')
     file_location = create_csv_file_for_player(player_id, start, end)
     data_frame = pd.read_csv(file_location, names=names)
@@ -213,12 +217,13 @@ file.write('Batch size: ' + str(batch_size_value)+ '\n')
 file.close()
 
 array = data_frame.values
-X = data_frame.iloc[:, 0:number_of_features_val]
-y = array[:, number_of_features_val]
+X_header = data_frame.iloc[:, 0:header_features]
+X_data = data_frame.iloc[:, header_features:number_of_features_val+header_features]
+y = array[:, number_of_features_val+header_features]
 yy = pd.get_dummies(y)
 y3 = np.array(yy.values.tolist())
 
-model_results = fit_model(X, y3, batch_size_value, test_size_val, repetitions_val, number_of_features_val)
+model_results = fit_model(X_data, y3, batch_size_value, test_size_val, repetitions_val, number_of_features_val)
 
 with open(path + result_file_name + '.json', 'w') as outfile:
     json.dump(model_results, outfile, indent=4)
