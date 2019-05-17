@@ -14,6 +14,7 @@ fs_features = ['ha', 'fg_pct', 'tp', 'tp_pct', 'ft', 'fta', 'ft_pct', 'blk', 'op
 
 names = header + features + footer
 fs_names = header + fs_features + footer
+header_features = header.__len__()
 
 
 def create_csv_file_for_all_players(start_date, end_date, fs_mode=None):
